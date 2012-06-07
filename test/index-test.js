@@ -11,6 +11,8 @@ vows.describe('passport-http-oauth').addBatch({
   },
   
   'should export strategies': function () {
+    assert.isFunction(oauth.ClientStrategy);
+    assert.strictEqual(oauth.ClientStrategy, oauth.ConsumerStrategy);
     assert.isFunction(oauth.TokenStrategy);
   },
   
