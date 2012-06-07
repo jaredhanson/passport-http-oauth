@@ -2,7 +2,7 @@
   "name": "passport-http-oauth",
   "version": "0.0.0",
   "description": "HTTP OAuth authentication strategy for Passport.",
-  "keywords": ["passport", "http" "oauth", "authn", "authentication", "authz", "authorization", "api"],
+  "keywords": ["passport", "http", "oauth", "authn", "authentication", "authz", "authorization", "api"],
   "repository": {
     "type": "git",
     "url": "git://github.com/jaredhanson/passport-http-oauth.git"
