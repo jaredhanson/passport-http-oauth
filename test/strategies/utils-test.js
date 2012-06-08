@@ -116,4 +116,14 @@ vows.describe('utils').addBatch({
     },
   },
   
+  'hmacsha1': {
+    'should encrypt key and text' : function() {
+      var key = 'keep-this-secret&lips-zipped';
+      var text = 'GET&http%3A%2F%2F127.0.0.1%3A3000%2F1%2Fusers%2Fshow.json&oauth_consumer_key%3D1234%26oauth_nonce%3D90662EEC0DB144DA8F08461DD5632284%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1339096128%26oauth_token%3Dabc-123-xyz-789%26oauth_version%3D1.0%26screen_name%3Djaredhanson%26user_id%3D1705';
+      var enc = utils.hmacsha1(key, text);
+      
+      assert.equal(enc, 'aOzxBKR9w/DqjOYbn4H1czq/b4s=');
+    },
+  },
+  
 }).export(module);
