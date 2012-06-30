@@ -26,7 +26,7 @@ vows.describe('TokenStrategy').addBatch({
         },
         // verify callback
         function(accessToken, done) {
-          done(null, { username: 'bob' }, { tokenSecret: 'lips-zipped' });
+          done(null, { username: 'bob' }, 'lips-zipped');
         }
       );
       return strategy;
