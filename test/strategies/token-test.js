@@ -746,6 +746,111 @@ vows.describe('TokenStrategy').addBatch({
     },
   },
   
+  'strategy handling a request with non-OAuth scheme': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'keep-this-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'lips-zipped');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/1/users/show.json?screen_name=jaredhanson&user_id=1705';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'FooBar vF9dft4qmT';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond with challenge' : function(err, challenge, status) {
+        assert.equal(challenge, 'OAuth realm="Users"');
+      },
+      'should respond with default status' : function(err, challenge, status) {
+        assert.isUndefined(status);
+      },
+    },
+  },
+  
+  'strategy handling a request with malformed-OAuth scheme': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'keep-this-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'lips-zipped');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/1/users/show.json?screen_name=jaredhanson&user_id=1705';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond without bad request status' : function(err, challenge, status) {
+        assert.strictEqual(challenge, 400);
+      },
+    },
+  },
+  
+  // TODO: Add test case for bad request with OAuth params in multiple locations
+  
   'strategy constructed without a consumer callback or verify callback': {
     'should throw an error': function (strategy) {
       assert.throws(function() { new TokenStrategy() });
