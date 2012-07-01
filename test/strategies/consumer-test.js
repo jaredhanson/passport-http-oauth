@@ -17,4 +17,16 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  'strategy constructed without a consumer callback or token callback': {
+    'should throw an error': function (strategy) {
+      assert.throws(function() { new ConsumerStrategy() });
+    },
+  },
+  
+  'strategy constructed without a token callback': {
+    'should throw an error': function (strategy) {
+      assert.throws(function() { new ConsumerStrategy(function() {}) });
+    },
+  },
+  
 }).export(module);
