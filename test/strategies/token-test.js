@@ -22,11 +22,19 @@ vows.describe('TokenStrategy').addBatch({
       var strategy = new TokenStrategy(
         // consumer callback
         function(consumerKey, done) {
-          done(null, { id: '1' }, 'keep-this-secret');
+          if (consumerKey == '1234') {
+            done(null, { id: '1' }, 'keep-this-secret');
+          } else {
+            done(new Error('something is wrong'))
+          }
         },
         // verify callback
         function(accessToken, done) {
-          done(null, { username: 'bob' }, 'lips-zipped');
+          if (accessToken == 'abc-123-xyz-789') {
+            done(null, { username: 'bob' }, 'lips-zipped');
+          } else {
+            done(new Error('something is wrong'))
+          }
         }
       );
       return strategy;
