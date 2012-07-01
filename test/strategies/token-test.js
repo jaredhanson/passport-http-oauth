@@ -967,6 +967,59 @@ vows.describe('TokenStrategy').addBatch({
     },
   },
   
+  'strategy handling a request with OAuth scheme with bad version': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'keep-this-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'lips-zipped');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/1/users/show.json?screen_name=jaredhanson&user_id=1705';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="1234",oauth_nonce="A7E738D9A9684A60A40607017735ADAD",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1339004912",oauth_token="abc-123-xyz-789",oauth_version="1.1",oauth_signature="TBrJJJWS896yWrbklSbhEd9MGQc%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond with challenge' : function(err, challenge, status) {
+        assert.equal(challenge, 'OAuth realm="Users", oauth_problem="version_rejected"');
+      },
+      'should respond with 400 status' : function(err, challenge, status) {
+        assert.equal(status, 400);
+      },
+    },
+  },
+  
   // TODO: Add test case for bad request with OAuth params in multiple locations
   
   'strategy constructed without a consumer callback or verify callback': {
