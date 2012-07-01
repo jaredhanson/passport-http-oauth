@@ -815,6 +815,61 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  'strategy handling a valid request with a request token where validate callback fails with an error': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(null, 'rxt0E5hKbslOEtzxD43hclL28XBZLJsF');
+        },
+        // validate callback
+        function(timestamp, nonce, done) {
+          done(new Error('validate callback failure'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(null, err);
+        }
+        
+        req.url = '/oauth/access_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="KyEf2M5ptWGDcz04jMScA2iJHkXHzkUW",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1341178687",oauth_token="wM9YRRm5",oauth_verifier="qriPjOnc",oauth_version="1.0",oauth_signature="ZP5%2FtXZcUiiD2HXKrevCL5FjY%2FM%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not call success or fail' : function(err, e) {
+        assert.isNull(err);
+      },
+      'should call error' : function(err, e) {
+        assert.instanceOf(e, Error);
+        assert.equal(e.message, 'validate callback failure');
+      },
+    },
+  },
+  
   // TODO: Invalid signature/secret tests
   
   'strategy constructed without a consumer callback or token callback': {
