@@ -126,4 +126,19 @@ vows.describe('utils').addBatch({
     },
   },
   
+  'plaintext': {
+    'should encode secrets 1' : function() {
+      var enc = utils.plaintext('djr9rjt0jd78jf88', 'jjd999tj88uiths3');
+      assert.equal(enc, 'djr9rjt0jd78jf88%26jjd999tj88uiths3');
+    },
+    'should encode secrets 2' : function() {
+      var enc = utils.plaintext('djr9rjt0jd78jf88', 'jjd99$tj88uiths3');
+      assert.equal(enc, 'djr9rjt0jd78jf88%26jjd99%2524tj88uiths3');
+    },
+    'should encode secrets 3' : function() {
+      var enc = utils.plaintext('djr9rjt0jd78jf88', '');
+      assert.equal(enc, 'djr9rjt0jd78jf88%26');
+    },
+  },
+  
 }).export(module);
