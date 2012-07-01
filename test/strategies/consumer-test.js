@@ -424,6 +424,71 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  'strategy handling a valid request with a request token where timestamp and nonce are validated': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(null, 'rxt0E5hKbslOEtzxD43hclL28XBZLJsF');
+        },
+        // validate callback
+        function(timestamp, nonce, done) {
+          if (timestamp == 1341178687 && nonce == 'KyEf2M5ptWGDcz04jMScA2iJHkXHzkUW') {
+            done(null, true);
+          } else {
+            done(new Error('something is wrong'))
+          }
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(null, user, info);
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/access_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="KyEf2M5ptWGDcz04jMScA2iJHkXHzkUW",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1341178687",oauth_token="wM9YRRm5",oauth_verifier="qriPjOnc",oauth_version="1.0",oauth_signature="ZP5%2FtXZcUiiD2HXKrevCL5FjY%2FM%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, user, info) {
+        assert.isNull(err);
+      },
+      'should authenticate' : function(err, user, info) {
+        assert.equal(user.id, '1');
+      },
+      'should set scheme to OAuth' : function(err, user, info) {
+        assert.equal(info.scheme, 'OAuth');
+      },
+      'should include token and verifier' : function(err, user, info) {
+        assert.equal(info.oauth.token, 'wM9YRRm5');
+        assert.equal(info.oauth.verifier, 'qriPjOnc');
+      },
+    },
+  },
+  
   'strategy constructed without a consumer callback or token callback': {
     'should throw an error': function (strategy) {
       assert.throws(function() { new ConsumerStrategy() });
