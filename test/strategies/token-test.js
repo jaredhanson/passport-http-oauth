@@ -537,6 +537,163 @@ vows.describe('TokenStrategy').addBatch({
     },
   },
   
+  'strategy handling a valid request where consumer callback fails with an error': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(new Error('consumer callback failure'));
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'lips-zipped');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(null, err);
+        }
+        
+        req.url = '/1/users/show.json?screen_name=jaredhanson&user_id=1705';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="1234",oauth_nonce="A7E738D9A9684A60A40607017735ADAD",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1339004912",oauth_token="abc-123-xyz-789",oauth_version="1.0",oauth_signature="TBrJJJWS896yWrbklSbhEd9MGQc%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not call success or fail' : function(err, e) {
+        assert.isNull(err);
+      },
+      'should call error' : function(err, e) {
+        assert.instanceOf(e, Error);
+        assert.equal(e.message, 'consumer callback failure');
+      },
+    },
+  },
+  
+  'strategy handling a valid request where verify callback fails with an error': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'keep-this-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(new Error('verify callback failure'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(null, err);
+        }
+        
+        req.url = '/1/users/show.json?screen_name=jaredhanson&user_id=1705';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="1234",oauth_nonce="A7E738D9A9684A60A40607017735ADAD",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1339004912",oauth_token="abc-123-xyz-789",oauth_version="1.0",oauth_signature="TBrJJJWS896yWrbklSbhEd9MGQc%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not call success or fail' : function(err, e) {
+        assert.isNull(err);
+      },
+      'should call error' : function(err, e) {
+        assert.instanceOf(e, Error);
+        assert.equal(e.message, 'verify callback failure');
+      },
+    },
+  },
+  
+  'strategy handling a valid request where validate callback fails with an error': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'keep-this-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'lips-zipped');
+        },
+        // validate callback
+        function(timestamp, nonce, done) {
+          done(new Error('validate callback failure'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(null, err);
+        }
+        
+        req.url = '/1/users/show.json?screen_name=jaredhanson&user_id=1705';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="1234",oauth_nonce="A7E738D9A9684A60A40607017735ADAD",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1339004912",oauth_token="abc-123-xyz-789",oauth_version="1.0",oauth_signature="TBrJJJWS896yWrbklSbhEd9MGQc%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not call success or fail' : function(err, e) {
+        assert.isNull(err);
+      },
+      'should call error' : function(err, e) {
+        assert.instanceOf(e, Error);
+        assert.equal(e.message, 'validate callback failure');
+      },
+    },
+  },
+  
   'strategy constructed without a consumer callback or verify callback': {
     'should throw an error': function (strategy) {
       assert.throws(function() { new TokenStrategy() });
