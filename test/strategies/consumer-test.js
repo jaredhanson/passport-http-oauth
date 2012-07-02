@@ -1136,6 +1136,56 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  'strategy handling a request with malformed OAuth scheme': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(new Error('token callback should not be called'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/request_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond without bad request status' : function(err, challenge, status) {
+        assert.strictEqual(challenge, 400);
+      },
+    },
+  },
+  
   'strategy constructed without a consumer callback or token callback': {
     'should throw an error': function (strategy) {
       assert.throws(function() { new ConsumerStrategy() });
