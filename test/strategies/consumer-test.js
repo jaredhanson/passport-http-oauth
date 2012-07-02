@@ -189,6 +189,10 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  // TODO: Implement test case for request with params in body
+  
+  // TODO: Implement test case for request with params in query
+  
   'strategy handling a valid request without a request token where timestamp and nonce are validated': {
     topic: function() {
       var strategy = new ConsumerStrategy(
@@ -1616,6 +1620,8 @@ vows.describe('ConsumerStrategy').addBatch({
       },
     },
   },
+  
+  // TODO: Add test case for bad request with OAuth params in multiple locations
   
   'strategy constructed without a consumer callback or token callback': {
     'should throw an error': function (strategy) {
