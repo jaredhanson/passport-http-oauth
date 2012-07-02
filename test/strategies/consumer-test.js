@@ -77,6 +77,62 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  'strategy handling a valid request without a request token using PLAINTEXT signature': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(new Error('token callback should not be called'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(null, user, info);
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/request_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_callback="http%3A%2F%2Fmacbook-air.local.jaredhanson.net%3A3001%2Foauth%2Fcallback",oauth_consumer_key="abc123",oauth_nonce="s9ncyMbjTtZyoEYi25dHaRyWI9nIilRQ",oauth_signature_method="PLAINTEXT",oauth_timestamp="1341196367",oauth_version="1.0",oauth_signature="ssh-secret%2526"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, user, info) {
+        assert.isNull(err);
+      },
+      'should authenticate' : function(err, user, info) {
+        assert.equal(user.id, '1');
+      },
+      'should set scheme to OAuth' : function(err, user, info) {
+        assert.equal(info.scheme, 'OAuth');
+      },
+      'should set callbackURL' : function(err, user, info) {
+        assert.equal(info.oauth.callbackURL, 'http://macbook-air.local.jaredhanson.net:3001/oauth/callback');
+      },
+    },
+  },
+  
   'strategy handling a valid request without a request token placing credentials in header with all-caps scheme': {
     topic: function() {
       var strategy = new ConsumerStrategy(
@@ -360,6 +416,59 @@ vows.describe('ConsumerStrategy').addBatch({
     },
   },
   
+  'strategy handling a valid request without a request token using PLAINTEXT signature where consumer secret is wrong': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret-wrong');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(new Error('token callback should not be called'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/request_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_callback="http%3A%2F%2Fmacbook-air.local.jaredhanson.net%3A3001%2Foauth%2Fcallback",oauth_consumer_key="abc123",oauth_nonce="s9ncyMbjTtZyoEYi25dHaRyWI9nIilRQ",oauth_signature_method="PLAINTEXT",oauth_timestamp="1341196367",oauth_version="1.0",oauth_signature="ssh-secret%2526"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond with challenge' : function(err, challenge, status) {
+        assert.equal(challenge, 'OAuth realm="Clients", oauth_problem="signature_invalid"');
+      },
+      'should respond with default status' : function(err, challenge, status) {
+        assert.isUndefined(status);
+      },
+    },
+  },
+  
   'strategy handling a valid request without a request token using unkown signature method': {
     topic: function() {
       var strategy = new ConsumerStrategy(
@@ -582,6 +691,63 @@ vows.describe('ConsumerStrategy').addBatch({
       'should include token and verifier' : function(err, user, info) {
         assert.equal(info.oauth.token, 'wM9YRRm5');
         assert.equal(info.oauth.verifier, 'qriPjOnc');
+      },
+    },
+  },
+  
+  'strategy handling a valid request with a request token using PLAINTEXT signature': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(null, '3yG0Panskjm5GGwdP5SUHFFXmF7aCl0v');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(null, user, info);
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/access_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="iiWqS4a7mKrpQWXO07osM9Om0PCDsMHN",oauth_signature_method="PLAINTEXT",oauth_timestamp="1341196375",oauth_token="AbSRoiyN",oauth_verifier="FOXJJYN0",oauth_version="1.0",oauth_signature="ssh-secret%25263yG0Panskjm5GGwdP5SUHFFXmF7aCl0v"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, user, info) {
+        assert.isNull(err);
+      },
+      'should authenticate' : function(err, user, info) {
+        assert.equal(user.id, '1');
+      },
+      'should set scheme to OAuth' : function(err, user, info) {
+        assert.equal(info.scheme, 'OAuth');
+      },
+      'should include token and verifier' : function(err, user, info) {
+        assert.equal(info.oauth.token, 'AbSRoiyN');
+        assert.equal(info.oauth.verifier, 'FOXJJYN0');
       },
     },
   },
@@ -909,6 +1075,59 @@ vows.describe('ConsumerStrategy').addBatch({
         req.headers = {};
         req.headers['host'] = '127.0.0.1:3000';
         req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="KyEf2M5ptWGDcz04jMScA2iJHkXHzkUW",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1341178687",oauth_token="wM9YRRm5",oauth_verifier="qriPjOnc",oauth_version="1.0",oauth_signature="ZP5%2FtXZcUiiD2HXKrevCL5FjY%2FM%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, user, info) {
+        assert.isNull(err);
+      },
+      'should respond with challenge' : function(err, challenge, status) {
+        assert.equal(challenge, 'OAuth realm="Clients", oauth_problem="signature_invalid"');
+      },
+      'should respond with default status' : function(err, challenge, status) {
+        assert.isUndefined(status);
+      },
+    },
+  },
+  
+  'strategy handling a valid request with a request token using PLAINTEXT signature where token secret is wrong': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(null, '3yG0Panskjm5GGwdP5SUHFFXmF7aCl0v-wrong');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/access_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="iiWqS4a7mKrpQWXO07osM9Om0PCDsMHN",oauth_signature_method="PLAINTEXT",oauth_timestamp="1341196375",oauth_token="AbSRoiyN",oauth_verifier="FOXJJYN0",oauth_version="1.0",oauth_signature="ssh-secret%25263yG0Panskjm5GGwdP5SUHFFXmF7aCl0v"';
         req.query = url.parse(req.url, true).query;
         req.connection = { encrypted: false };
         process.nextTick(function () {
