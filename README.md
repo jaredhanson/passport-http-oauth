@@ -69,6 +69,60 @@ application:
         // ...
       });
 
+## Usage of Token Strategy
+
+#### Configure Strategy
+
+The OAuth token authentication strategy authenticates users based on an
+access token issued to a consumer.  The strategy requires a `consumer` callback,
+`verify` callback, and `validate` callback.  The secrets supplied by the
+`consumer` and `verify` callbacks are used to compute a signature, and
+authentication fails if it does not match the request signature.  `user` as
+supplied by the `verify` callback is the authenticating entity of this strategy,
+and will be set by Passport at `req.user`.
+
+    passport.use('token', new TokenStrategy(
+      function(consumerKey, done) {
+        Consumer.findByKey({ key: consumerKey }, function (err, consumer) {
+          if (err) { return done(err); }
+          if (!consumer) { return done(null, false); }
+          return done(null, consumer, consumer.secret);
+        });
+      },
+      function(accessToken, done) {
+        AccessToken.findOne(accessToken, function (err, token) {
+          if (err) { return done(err); }
+          if (!token) { return done(null, false); }
+          Users.findOne(token.userId, function(err, user) {
+            if (err) { return done(err); }
+            if (!user) { return done(null, false); }
+            // fourth argument is optional info.  typically used to pass
+            // details needed to authorize the request (ex: `scope`)
+            return done(null, user, token.secret, { scope: token.scope });
+          });
+        });
+      },
+      function(timestamp, nonce, done) {
+        // validate the timestamp and nonce as necessary
+        done(null, true)
+      }
+    ));
+    
+#### Authenticate Requests
+
+Use `passport.authenticate()`, specifying the `'token'` strategy, to
+authenticate requests.  This strategy is intended for use in protected API
+endpoints, so the `session` option can be set to `false`.
+
+For example, as route middleware in an [Express](http://expressjs.com/)
+application:
+
+    app.get('/api/userinfo', 
+      passport.authenticate('token', { session: false }),
+      function(req, res) {
+        res.json(req.user);
+      });
+
 ## Examples
 
 The [example](https://github.com/jaredhanson/oauthorize/tree/master/examples/express2)
