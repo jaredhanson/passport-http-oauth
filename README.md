@@ -69,7 +69,7 @@ application:
 
     app.post('/access_token', 
       passport.authenticate('consumer', { session: false }),
-      oauthorize.requestToken(
+      oauthorize.accessToken(
         // ...
       });
 
