@@ -2,6 +2,22 @@
 
 HTTP OAuth authentication strategy for [Passport](https://github.com/jaredhanson/passport).
 
+This module lets you authenticate HTTP requests using the authorization scheme
+defined by the [OAuth](http://tools.ietf.org/html/rfc5849) 1.0 protocol.  OAuth
+is typically used protect API endpoints, including endpoints defined by the
+OAuth protocol itself, as well as other endpoints exposed by the server.
+
+By plugging into Passport, OAuth API authentication can be easily and
+unobtrusively integrated into any application or framework that supports [Connect](http://www.senchalabs.org/connect/)-style
+middleware, including [Express](http://expressjs.com/).
+
+Note that this strategy provides support for implementing OAuth as a service
+provider.  If your application is implementing OAuth as a client for delegated
+authentication (for example, using [Facebook](https://github.com/jaredhanson/passport-facebook)
+or [Twitter](https://github.com/jaredhanson/passport-twitter)), please see
+[Passport-OAuth](https://github.com/jaredhanson/passport-oauth) for the
+appropriate strategy.
+
 ## Examples
 
 The [example](https://github.com/jaredhanson/oauthorize/tree/master/examples/express2)
