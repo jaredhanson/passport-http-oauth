@@ -256,11 +256,7 @@ vows.describe('ConsumerStrategy').addBatch({
       var strategy = new ConsumerStrategy(
         // consumer callback
         function(consumerKey, done) {
-          if (consumerKey == 'abc123') {
-            done(null, { id: '1' }, 'ssh-secret-wrong');
-          } else {
-            done(new Error('something is wrong'))
-          }
+          done(null, { id: '1' }, 'ssh-secret-wrong');
         },
         // token callback
         function(requestToken, done) {
@@ -304,6 +300,59 @@ vows.describe('ConsumerStrategy').addBatch({
       },
       'should respond with default status' : function(err, challenge, status) {
         assert.isUndefined(status);
+      },
+    },
+  },
+  
+  'strategy handling a valid request without a request token using unkown signature method': {
+    topic: function() {
+      var strategy = new ConsumerStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // token callback
+        function(requestToken, done) {
+          done(new Error('token callback should not be called'));
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/oauth/request_token';
+        req.method = 'POST';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_callback="http%3A%2F%2Fmacbook-air.local.jaredhanson.net%3A3001%2Foauth%2Fcallback",oauth_consumer_key="abc123",oauth_nonce="fNyKdt8ZTgTVdEABtUMFzcXRxF4a230q",oauth_signature_method="UNKNOWN",oauth_timestamp="1341176111",oauth_version="1.0",oauth_signature="tgsFsPL%2BDDQmfEz6hbCywhO%2BrE4%3D"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond with challenge' : function(err, challenge, status) {
+        assert.equal(challenge, 'OAuth realm="Clients", oauth_problem="signature_method_rejected"');
+      },
+      'should respond with 400 status' : function(err, challenge, status) {
+        assert.equal(status, 400);
       },
     },
   },
