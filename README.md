@@ -2,7 +2,7 @@
 
 HTTP OAuth authentication strategy for [Passport](https://github.com/jaredhanson/passport).
 
-#### Examples
+## Examples
 
 The [example](https://github.com/jaredhanson/oauthorize/tree/master/examples/express2)
 included with [OAuthorize](https://github.com/jaredhanson/oauthorize)
