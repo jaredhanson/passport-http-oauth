@@ -82,7 +82,7 @@ vows.describe('TokenStrategy').addBatch({
     },
   },
   
-  'strategy handling a valid request with credentials in header using PLAINTEXT method': {
+  'strategy handling a valid request with credentials in header using PLAINTEXT signature': {
     topic: function() {
       var strategy = new TokenStrategy(
         // consumer callback
@@ -548,7 +548,58 @@ vows.describe('TokenStrategy').addBatch({
     },
   },
   
-  // TODO: Implement test case for invalid PLAINTEXT signature
+  'strategy handling a request with invalid PLAINTEXT signature': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'not-mmyauoBm7rRv0kLsNKAicmtsxsxKWJDmoEo7obTqglkyGNHs8hn78pkTj70tXatl');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(null, challenge, status);
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/api/userinfo';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="bSzaRm1X9uu6DwjAuAsOnn6cnxYoVibS",oauth_signature_method="PLAINTEXT",oauth_timestamp="1341195485",oauth_token="Xe4F8Cf5vw68BoZF",oauth_version="1.0",oauth_signature="ssh-secret%2526mmyauoBm7rRv0kLsNKAicmtsxsxKWJDmoEo7obTqglkyGNHs8hn78pkTj70tXatl"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, challenge, status) {
+        assert.isNull(err);
+      },
+      'should respond with challenge' : function(err, challenge, status) {
+        assert.equal(challenge, 'OAuth realm="Users", oauth_problem="signature_invalid"');
+      },
+      'should respond with default status' : function(err, challenge, status) {
+        assert.isUndefined(status);
+      },
+    },
+  },
   
   'strategy handling a request with unknown signature method': {
     topic: function() {
