@@ -67,7 +67,7 @@ and access token API endpoints, so the `session` option can be set to `false`.
 For example, as route middleware in an [Express](http://expressjs.com/)
 application:
 
-    app.get('/access_token', 
+    app.post('/access_token', 
       passport.authenticate('consumer', { session: false }),
       oauthorize.requestToken(
         // ...
