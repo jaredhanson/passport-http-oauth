@@ -18,6 +18,57 @@ or [Twitter](https://github.com/jaredhanson/passport-twitter)), please see
 [Passport-OAuth](https://github.com/jaredhanson/passport-oauth) for the
 appropriate strategy.
 
+## Usage of Consumer Strategy
+
+#### Configure Strategy
+
+The OAuth consumer authentication strategy authenticates consumers based on a
+consumer key and secret (and optionally a temporary request token and secret).
+The strategy requires a `consumer` callback, `token` callback, and `validate`
+callback.  The secrets supplied by the `consumer` and `token` callbacks are used
+to compute a signature, and authentication fails if it does not match the
+request signature.  `consumer` as supplied by the `consumer` callback is the
+authenticating entity of this strategy, and will be set by Passport at
+`req.user`.
+
+    passport.use('consumer', new ConsumerStrategy(
+      function(consumerKey, done) {
+        Consumer.findByKey({ key: consumerKey }, function (err, consumer) {
+          if (err) { return done(err); }
+          if (!consumer) { return done(null, false); }
+          return done(null, consumer, consumer.secret);
+        });
+      },
+      function(requestToken, done) {
+        RequestToken.findOne(requestToken, function (err, token) {
+          if (err) { return done(err); }
+          if (!token) { return done(null, false); }
+          // third argument is optional info.  typically used to pass
+          // details needed to authorize the request (ex: `verifier`)
+          return done(null, token.secret, { verifier: token.verifier });
+        });
+      },
+      function(timestamp, nonce, done) {
+        // validate the timestamp and nonce as necessary
+        done(null, true)
+      }
+    ));
+
+#### Authenticate Requests
+
+Use `passport.authenticate()`, specifying the `'consumer'` strategy, to
+authenticate requests.  This strategy is intended for use in the request token
+and access token API endpoints, so the `session` option can be set to `false`.
+
+For example, as route middleware in an [Express](http://expressjs.com/)
+application:
+
+    app.get('/access_token', 
+      passport.authenticate('consumer', { session: false }),
+      oauthorize.requestToken(
+        // ...
+      });
+
 ## Examples
 
 The [example](https://github.com/jaredhanson/oauthorize/tree/master/examples/express2)
