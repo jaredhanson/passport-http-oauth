@@ -18,6 +18,10 @@ or [Twitter](https://github.com/jaredhanson/passport-twitter)), please see
 [Passport-OAuth](https://github.com/jaredhanson/passport-oauth) for the
 appropriate strategy.
 
+## Installation
+
+    $ npm install passport-http-oauth
+
 ## Usage of Consumer Strategy
 
 #### Configure Strategy
