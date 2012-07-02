@@ -123,6 +123,18 @@ application:
         res.json(req.user);
       });
 
+## Combine with OAuthorize
+
+[OAuthorize](https://github.com/jaredhanson/oauthorize) is a toolkit for
+implementing OAuth service providers.  It bundles a suite of middleware
+implementing the request token, access token, and user authorization endpoints
+of the OAuth 1.0 protocol.
+
+This middleware, combined with the `ConsumerStrategy` and a user authentication
+strategy can be used to implement the complete OAuth flow, issuing access tokens
+to consumers.  `TokenStrategy` can then be used to protect API endpoints using
+the access tokens issued.
+
 ## Examples
 
 The [example](https://github.com/jaredhanson/oauthorize/tree/master/examples/express2)
