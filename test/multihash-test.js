@@ -12,7 +12,7 @@ vows.describe('MultiHash').addBatch({
     },
     
     'should report length of zero' : function(hash) {
-      assert.lengthOf(hash, 0);
+      assert.equal(hash.length, 0);
     },
     'should not have key' : function(hash) {
       assert.isFalse(hash.has('something'));
@@ -37,7 +37,7 @@ vows.describe('MultiHash').addBatch({
     },
     
     'should report length of two' : function(hash) {
-      assert.lengthOf(hash, 2);
+      assert.equal(hash.length, 2);
     },
     'should have keys' : function(hash) {
       assert.isTrue(hash.has('hello'));
@@ -67,7 +67,7 @@ vows.describe('MultiHash').addBatch({
     },
     
     'should report length of one' : function(hash) {
-      assert.lengthOf(hash, 1);
+      assert.equal(hash.length, 1);
     },
     'should have key' : function(hash) {
       assert.isTrue(hash.has('foo'));
@@ -91,7 +91,7 @@ vows.describe('MultiHash').addBatch({
       var mh = new MultiHash();
       mh.add({ foo: 'x' });
       mh.add({ bar: 'y', baz: 'z' });
-      assert.lengthOf(mh, 3);
+      assert.equal(mh.length, 3);
       assert.equal(mh.keys()[0], 'foo');
       assert.equal(mh.values('foo')[0], 'x');
       assert.equal(mh.keys()[1], 'bar');
@@ -103,7 +103,7 @@ vows.describe('MultiHash').addBatch({
       var mh = new MultiHash();
       mh.add({ hello: 'bob' });
       mh.add({ hello: 'joe' });
-      assert.lengthOf(mh, 1);
+      assert.equal(mh.length, 1);
       assert.equal(mh.keys()[0], 'hello');
       assert.equal(mh.values('hello')[0], 'bob');
       assert.equal(mh.values('hello')[1], 'joe');
@@ -111,9 +111,9 @@ vows.describe('MultiHash').addBatch({
     'should not add null object' : function() {
       var mh = new MultiHash();
       mh.add({ hello: 'bob' });
-      assert.lengthOf(mh, 1);
+      assert.equal(mh.length, 1);
       mh.add(null);
-      assert.lengthOf(mh, 1);
+      assert.equal(mh.length, 1);
     },
   },
   
@@ -122,9 +122,9 @@ vows.describe('MultiHash').addBatch({
       var mh = new MultiHash();
       mh.put('hello', 'world');
       mh.put('foo', 'bar');
-      assert.lengthOf(mh, 2);
+      assert.equal(mh.length, 2);
       mh.del('hello')
-      assert.lengthOf(mh, 1);
+      assert.equal(mh.length, 1);
       assert.equal(mh.values('foo')[0], 'bar');
     },
   },
