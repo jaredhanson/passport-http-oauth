@@ -82,6 +82,63 @@ vows.describe('TokenStrategy').addBatch({
     },
   },
   
+  'strategy handling a valid request with credentials in header using PLAINTEXT method': {
+    topic: function() {
+      var strategy = new TokenStrategy(
+        // consumer callback
+        function(consumerKey, done) {
+          done(null, { id: '1' }, 'ssh-secret');
+        },
+        // verify callback
+        function(accessToken, done) {
+          done(null, { username: 'bob' }, 'mmyauoBm7rRv0kLsNKAicmtsxsxKWJDmoEo7obTqglkyGNHs8hn78pkTj70tXatl');
+        }
+      );
+      return strategy;
+    },
+    
+    'after augmenting with actions': {
+      topic: function(strategy) {
+        var self = this;
+        var req = {};
+        strategy.success = function(user, info) {
+          self.callback(null, user, info);
+        }
+        strategy.fail = function(challenge, status) {
+          self.callback(new Error('should not be called'));
+        }
+        strategy.error = function(err) {
+          self.callback(new Error('should not be called'));
+        }
+        
+        req.url = '/api/userinfo';
+        req.method = 'GET';
+        req.headers = {};
+        req.headers['host'] = '127.0.0.1:3000';
+        req.headers['authorization'] = 'OAuth oauth_consumer_key="abc123",oauth_nonce="bSzaRm1X9uu6DwjAuAsOnn6cnxYoVibS",oauth_signature_method="PLAINTEXT",oauth_timestamp="1341195485",oauth_token="Xe4F8Cf5vw68BoZF",oauth_version="1.0",oauth_signature="ssh-secret%2526mmyauoBm7rRv0kLsNKAicmtsxsxKWJDmoEo7obTqglkyGNHs8hn78pkTj70tXatl"';
+        req.query = url.parse(req.url, true).query;
+        req.connection = { encrypted: false };
+        process.nextTick(function () {
+          strategy.authenticate(req);
+        });
+      },
+      
+      'should not generate an error' : function(err, user, info) {
+        assert.isNull(err);
+      },
+      'should authenticate' : function(err, user, info) {
+        assert.equal(user.username, 'bob');
+      },
+      'should set scheme to OAuth' : function(err, user, info) {
+        assert.equal(info.scheme, 'OAuth');
+      },
+      'should set consumer' : function(err, user, info) {
+        assert.equal(info.consumer.id, '1');
+        assert.strictEqual(info.client, info.consumer);
+      },
+    },
+  },
+  
   'strategy handling a valid request with credentials in header with all-caps scheme': {
     topic: function() {
       var strategy = new TokenStrategy(
