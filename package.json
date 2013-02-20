@@ -1,6 +1,6 @@
 {
   "name": "passport-http-oauth",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "HTTP OAuth authentication strategy for Passport.",
   "keywords": ["passport", "http", "oauth", "authn", "authentication", "authz", "authorization", "api"],
   "repository": {
