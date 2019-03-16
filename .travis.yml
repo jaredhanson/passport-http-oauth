@@ -1,5 +1,17 @@
 language: "node_js"
 node_js:
-  - 0.4
-  - 0.6
   - 0.8
+
+
+# NOTE: `istanbul` and `coveralls` are pinned for compatibility with node 0.8.
+before_install:
+  - "npm install -g istanbul@0.2.2"
+  - "npm install -g coveralls@2.11.4"
+
+script:
+  - "NODE_PATH=lib make check"
+
+after_success:
+  - "NODE_PATH=lib make report-cov"
+
+sudo: false

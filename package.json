@@ -25,10 +25,11 @@
     "passport": "~0.1.11"
   },
   "devDependencies": {
-    "vows": "0.6.x"
+    "make-node": "0.4.6",
+    "vows": "0.8.x"
   },
   "scripts": {
-    "test": "NODE_PATH=lib node_modules/.bin/vows test/*-test.js test/**/*-test.js"
+    "test": "NODE_PATH=lib make test"
   },
   "engines": { "node": ">= 0.4.0" }
 }
