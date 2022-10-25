@@ -18,6 +18,12 @@ or [Twitter](https://github.com/jaredhanson/passport-twitter)), please see
 [Passport-OAuth](https://github.com/jaredhanson/passport-oauth) for the
 appropriate strategy.
 
+<div align="center">
+
+:heart: [Sponsors](https://www.passportjs.org/sponsors/?utm_source=github&utm_medium=referral&utm_campaign=passport-http-oauth&utm_content=nav-sponsors)
+
+</div>
+
 [![npm](https://img.shields.io/npm/v/passport-http-oauth.svg)](https://www.npmjs.com/package/passport-http-oauth)
 [![build](https://img.shields.io/travis/jaredhanson/passport-http-oauth.svg)](https://travis-ci.org/jaredhanson/passport-http-oauth)
 [![coverage](https://img.shields.io/coveralls/jaredhanson/passport-http-oauth.svg)](https://coveralls.io/github/jaredhanson/passport-http-oauth)
